@@ -1,0 +1,79 @@
+﻿@page "/Setteing"
+
+
+
+<h3>Setteing</h3>
+
+@foreach(var item in settingseet.Keys.ToList())
+{
+    <div>
+        <label > @item</label>
+        <input type="text" @bind="settingseet[item]"/>
+    </div>
+    <br>
+}
+
+
+
+
+<button @onclick="SaveSetting">Save</button>
+<button @onclick="LoadSetting">Load</button>
+
+@code {
+    [Inject]
+    private interfacePreferences preferences { get; set; }
+
+    private Dictionary<string,string>settingseet= new Dictionary<string, string>()
+    {
+
+        {"APIURL",""},
+        {"fastload","false"},
+    };
+    
+
+    protected override void OnInitialized()//ページを読み込んだ時 
+    {
+        if(preferences.FastLoad("fastload")==null)
+        {
+            SaveSetting();
+        }
+        LoadSetting();
+    }
+
+    private void SaveSetting()
+    {
+        try
+        {
+            foreach(var item in settingseet.Keys.ToList())
+            {
+                preferences.SaveData(item,settingseet[item]);
+            }
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+    }
+
+    private void LoadSetting()
+    {
+        try
+        {
+            foreach(var item in settingseet.Keys.ToList())
+            {
+                settingseet[item]=preferences.FastLoad(item);
+            }
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    public class seetdate()
+    {
+        public string Key { get; set; }
+        public string Value { get; set; }
+    }
+}

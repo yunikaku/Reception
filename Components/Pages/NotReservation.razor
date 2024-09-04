@@ -1,0 +1,78 @@
+﻿@page "/NotReservation"
+@using Reception.Models
+
+
+<h3>NotReservation</h3> 
+<h1>名前、要件、会社名を入力してください</h1>
+
+<EditForm Model="@reservation" OnValidSubmit="OnValidSubmit">
+   
+    <div>
+        <label>名前</label>
+        <InputText @bind-Value="@reservation.NotReservationName" />
+    </div>
+
+    <div>
+        <label>要件</label>
+        <InputText @bind-Value="@reservation.NotReservationRequirement" />
+    </div>
+    <div>
+        <label>会社名</label>
+        <InputText @bind-Value="@reservation.NotReservationCompanyName" />
+    </div>
+
+    <button type="submit">呼び出し</button>
+
+</EditForm>
+
+@code {
+
+
+    private Models.postNotReservation reservation = new Models.postNotReservation();
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    private InterfaceAPI InterfaceAPI { get; set; }
+
+    private　async void OnValidSubmit()
+    {
+        try
+        {
+            SetNfc setNfc = new SetNfc();
+            // ここで要件を登録する
+            Models.NotReservation notReservation = await InterfaceAPI.PostNotReservation(reservation);
+
+            //Slakグループに要件と名前を送信する
+            string GroupSlakID = "";
+            string text = "";
+            bool resultSlack = await InterfaceAPI.GroupSlack(GroupSlakID,text);
+
+            //ここでESP32からカードのUIDを受け取る
+
+            //受け取ったUIDでNFCテーブルにユーザー情報をセットする
+            string UID = "1234567890";
+            setNfc.NotReservationId = notReservation.NotReservationId;
+            setNfc.CardUid = UID;
+            bool result = await InterfaceAPI.SetNFC(setNfc);
+            if(result)
+            {
+                await Application.Current.MainPage.DisplayAlert("予約情報", "ただいま、担当者を呼び出して居ります", "カードを受け取り少々お待ちください", "OK");
+                NavigationManager.NavigateTo("/");
+                //カードを出す
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            await Application.Current.MainPage.DisplayAlert("予約情報", "エラー発生しました", "OK");
+            NavigationManager.NavigateTo("/");
+        }
+
+        
+
+        
+    }
+
+}

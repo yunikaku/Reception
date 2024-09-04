@@ -1,0 +1,45 @@
+﻿@page "/"
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+
+<div>
+    <button @onclick="()=>Reservation()">予約している方</button>
+    <br />
+    <button @onclick="()=>NotReservation()">予約していない方</button>
+    <br />
+    <button @onclick="()=>Delivery()">宅配便　郵便業者様</button>
+    
+</div>
+
+<button>設定</button>
+
+
+@code
+{
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    private void Reservation()
+    {
+        NavigationManager.NavigateTo("/reservation");
+    }
+
+    private void NotReservation()
+    {
+        NavigationManager.NavigateTo("/notreservation");
+    }
+
+    private async void Delivery()
+    {
+        //Slakグループに郵便宅配が来たときに通知するAPIで
+        //事務部のグループに通知する
+        int GroupId = 0;
+
+        await Application.Current.MainPage.DisplayAlert("郵便宅配", "担当者を呼び出しています　少々お待ちください", "OK");
+    }
+
+    
+}

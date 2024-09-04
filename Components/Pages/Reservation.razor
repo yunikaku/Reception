@@ -1,0 +1,68 @@
+﻿@page "/Reservation"
+@using Reception.Models
+
+<h3>Reservation</h3>
+<h1>QRコードを読ませてください</h1>
+
+//カメラ映像を表示
+//読み込んだらleedに渡す
+
+
+<button @onclick="()=>Home()">ホームへ戻る</button>
+
+
+@code
+{
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+    [Inject]
+    private InterfaceAPI InterfaceAPI { get; set; }
+
+    private void Home()
+    {
+        NavigationManager.NavigateTo("/");
+    }   
+    private async void leed(int id)
+    {
+        EmployeeReservation employeeReservation=  await InterfaceAPI.GetEmployeeReservations(id);
+        if(employeeReservation != null)
+        {
+            await Application.Current.MainPage.DisplayAlert("予約情報", "予約情報が見つかりませんでした","ホームへ戻ります", "OK");
+            NavigationManager.NavigateTo("/");
+        }
+        var action = await Application.Current.MainPage.DisplayActionSheet("予約情報",employeeReservation.Requirement, "OK", null, "確認", "キャンセル");
+        if(action !="確認")
+        {
+            await Application.Current.MainPage.DisplayAlert("予約情報", "キャンセルされました", "OK");
+            NavigationManager.NavigateTo("/ReservationDetail");
+        }
+        SetNfc setNfc = new SetNfc();
+
+        //ここでESP32からカードのUIDを受け取る
+
+        string UID = "1234567890";
+        setNfc.ClientCompanyEmployeesId = employeeReservation.ClientCompanyEmployeesId;
+        setNfc.CardUid = UID;
+
+
+        //受け取ったUIDでNFCテーブルにユーザー情報をセットする
+        bool result = await InterfaceAPI.SetNFC(setNfc);
+        if(!result)
+        {
+            await Application.Current.MainPage.DisplayAlert("予約情報", "エラーが発生しました","ホームへ戻ります", "OK");
+            NavigationManager.NavigateTo("/");
+        }
+        //カードを出す
+
+        await Application.Current.MainPage.DisplayAlert("予約情報", "ただいま、担当者を呼び出して居ります","カードを受け取り少々お待ちください", "OK");
+        string GroupSlakID= "";
+        string text = "予約情報が来ました";
+        await InterfaceAPI.DMSlack(GroupSlakID,text);
+
+        NavigationManager.NavigateTo("/");
+
+
+
+    }
+
+}
